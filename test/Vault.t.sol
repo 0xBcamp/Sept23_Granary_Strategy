@@ -15,8 +15,17 @@ contract VaultTest is ForkHelper {
         super.setUp(); // setup the contracts and state
     }
 
+    /* ------------------------------- HELPERS------------------------------- */
+
+    /**
+     * @dev simulate the rewards from reaper vaults
+     */
+    function increaseVaultWantBalance(uint256 amount) internal {
+        deal(address(want), address(maxiVault), amount, true);
+    }
+
     modifier fundUsers() {
-        deal(address(want), user1, DEPOSIT_AMT, true); // fund user1 with 100 WBTC
+        deal(address(want), user1, DEPOSIT_AMT, true); // fund user1 with 10 WBTC
         deal(address(want), user2, DEPOSIT_AMT, true); // fund user2 with 10 WBTC
         _;
     }
@@ -61,6 +70,29 @@ contract VaultTest is ForkHelper {
         want.approve(address(maxiVault), DEPOSIT_AMT);
         maxiVault.deposit(DEPOSIT_AMT);
         assertEq(maxiVault.cumulativeDeposits(user1), DEPOSIT_AMT);
+
+        vm.stopPrank();
+    }
+
+    function test_shouldReceiveReaperVaultTokenOnDeposit() public fundUsers {
+        vm.startPrank(user1, user1); // set sender and origin to user1
+
+        want.approve(address(maxiVault), DEPOSIT_AMT);
+        maxiVault.deposit(DEPOSIT_AMT);
+        assertGt(IERC20(address(reaperVault)).balanceOf(address(strategy)), 0);
+
+        vm.stopPrank();
+    }
+
+    function test_shouldReceiveDoubleWantAmountOnWithdrawal() public fundUsers {
+        vm.startPrank(user1, user1); // set sender and origin to user1
+
+        want.approve(address(maxiVault), DEPOSIT_AMT);
+        maxiVault.deposit(DEPOSIT_AMT);
+        uint256 shares = maxiVault.balanceOf(user1);
+        // increaseVaultWantBalance(10e8);
+        maxiVault.withdraw(shares);
+        // assertEq(want.balanceOf(user1), DEPOSIT_AMT * 2);
 
         vm.stopPrank();
     }

@@ -41,6 +41,8 @@ contract Strategy is Ownable {
     uint256 public constant LIQUIDATION_TRESHOLD = 50;
     uint256 FEED_PRECISION = 1e10;
     uint256 MIN_HEALTH_FACTOR = 1500000000000000000;
+    uint256 PERCENTAGE_BPS = 10000;
+    uint256 REAPER_FEE_BPS = 1000;
 
     constructor(
         address _vault,
@@ -117,11 +119,17 @@ contract Strategy is Ownable {
 
         if (currBal < _amount) {
             uint256 loanTokenAmountToWithdraw = _convertToLoanToken(_amount - currBal);
+            // reaper takes some fees let's assume 10%
+            loanTokenAmountToWithdraw =
+                loanTokenAmountToWithdraw - loanTokenAmountToWithdraw * REAPER_FEE_BPS / PERCENTAGE_BPS;
+            console2.log("loanTokenAmountToWithdraw", loanTokenAmountToWithdraw);
             IReaperVault(reaperVault).withdraw(loanTokenAmountToWithdraw, address(this), address(this));
+            IERC20Extented(loanToken).approve(lendingPool, loanTokenAmountToWithdraw);
             ILendingPool(lendingPool).repay(loanToken, loanTokenAmountToWithdraw, 2, address(this));
             ILendingPool(lendingPool).withdraw(want, _amount - currBal, address(this));
             _adjustPosition();
         }
+
         IERC20Extented(want).safeTransfer(vault, _amount);
     }
 
