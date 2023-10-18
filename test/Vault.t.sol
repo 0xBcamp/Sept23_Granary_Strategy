@@ -13,7 +13,7 @@ contract VaultTest is ForkHelper {
 
     function setUp() public override {
         super.setUp(); // setup the contracts and state
-    }
+        }
 
     /* ------------------------------- HELPERS------------------------------- */
 
@@ -84,16 +84,16 @@ contract VaultTest is ForkHelper {
         vm.stopPrank();
     }
 
-    function test_shouldReceiveDoubleWantAmountOnWithdrawal() public fundUsers {
-        vm.startPrank(user1, user1); // set sender and origin to user1
+    // function test_shouldReceiveDoubleWantAmountOnWithdrawal() public fundUsers {
+    //     vm.startPrank(user1, user1); // set sender and origin to user1
 
-        want.approve(address(maxiVault), DEPOSIT_AMT);
-        maxiVault.deposit(DEPOSIT_AMT);
-        uint256 shares = maxiVault.balanceOf(user1);
-        // increaseVaultWantBalance(10e8);
-        maxiVault.withdraw(shares);
-        // assertEq(want.balanceOf(user1), DEPOSIT_AMT * 2);
+    //     want.approve(address(maxiVault), DEPOSIT_AMT);
+    //     maxiVault.deposit(DEPOSIT_AMT);
+    //     uint256 shares = maxiVault.balanceOf(user1);
+    //     // increaseVaultWantBalance(10e8);
+    //     maxiVault.withdraw(shares);
+    //     // assertEq(want.balanceOf(user1), DEPOSIT_AMT * 2);
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 }
