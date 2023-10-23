@@ -1,5 +1,6 @@
 import { erc20ABI } from "wagmi";
-export const vaultContract = {
+export const vaultContractConfig = {
+  address: "0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f",
   abi: [
     {
       anonymous: false,
@@ -828,6 +829,7 @@ export const vaultContract = {
   ],
 };
 
-export const wbtcContract = {
+export const wbtcContractConfig = {
+  address: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
   abi: erc20ABI,
-};
+} as const;

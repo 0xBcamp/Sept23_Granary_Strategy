@@ -7,17 +7,15 @@ import {
   usePublicClient,
   useWalletClient,
 } from "wagmi";
-import { erc20ABI } from "wagmi";
-import { vaultContract } from "../utils/contracts";
-import { vaultAddress } from "../utils/constant";
+import { wbtcContractConfig, vaultContractConfig } from "../utils/contracts";
 
 const Card = () => {
   const { address } = useAccount();
   const { config: approveConfig } = usePrepareContractWrite({
-    ...erc20ABI,
+    ...wbtcContractConfig,
     functionName: "approve",
     enabled: true,
-    args: [vaultAddress, BigInt(10000000000)],
+    args: [vaultContractConfig.address as `0x${string}`, BigInt(10000000000)],
   });
   const { write: writeApprove, data: dataApprove } =
     useContractWrite(approveConfig);
@@ -72,7 +70,10 @@ const Card = () => {
               placeholder="Amount"
             />
             <div className="flex justify-center gap-4">
-              <button className="bg-indigo-500 font-bold rounded-lg text-white p-2">
+              <button
+                onClick={handleApprove}
+                className="bg-indigo-500 font-bold rounded-lg text-white p-2"
+              >
                 Deposit
               </button>
               <button className="bg-red-400 font-bold text-white rounded-lg p-2 ">
