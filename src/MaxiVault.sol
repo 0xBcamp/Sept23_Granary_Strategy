@@ -67,6 +67,10 @@ contract MaxiVault is ERC20, Ownable, ReentrancyGuard {
         tvlCap = _tvlCap;
     }
 
+    function decimals() public pure override returns (uint8) {
+        return 8;
+    }
+
     /**
      * @dev Connects the vault to its initial strategy. One use only.
      * @notice deployer has only 20 minutes after construction to connect the initial strategy.
@@ -175,6 +179,7 @@ contract MaxiVault is ERC20, Ownable, ReentrancyGuard {
         if (b < r) {
             uint256 _withdraw = r - b;
             IStrategy(strategy).withdraw(_withdraw);
+
             uint256 _after = token.balanceOf(address(this));
             uint256 _diff = _after - b;
             if (_diff < _withdraw) {

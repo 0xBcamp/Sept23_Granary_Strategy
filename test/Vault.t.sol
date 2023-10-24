@@ -8,12 +8,13 @@ import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
 
 contract VaultTest is ForkHelper {
-    uint256 public constant DEPOSIT_AMT = 10e8;
-    uint256 public constant PRECISION_DECIMALS = 1e10;
+    uint256 DEPOSIT_AMT = 10e8;
+    uint256 PRECISION_DECIMALS = 1e10;
+    uint256 REAPER_SHARES_AFTER_FEES = 130095919192963941529041;
 
     function setUp() public override {
         super.setUp(); // setup the contracts and state
-        }
+    }
 
     /* ------------------------------- HELPERS------------------------------- */
 
@@ -79,21 +80,23 @@ contract VaultTest is ForkHelper {
 
         want.approve(address(maxiVault), DEPOSIT_AMT);
         maxiVault.deposit(DEPOSIT_AMT);
-        assertGt(IERC20(address(reaperVault)).balanceOf(address(strategy)), 0);
+        assertEq(IERC20(address(reaperVault)).balanceOf(address(strategy)), REAPER_SHARES_AFTER_FEES);
 
         vm.stopPrank();
     }
 
-    // function test_shouldReceiveDoubleWantAmountOnWithdrawal() public fundUsers {
-    //     vm.startPrank(user1, user1); // set sender and origin to user1
+    function test_shouldWithdrawPortionOfShares() public fundUsers {
+        vm.startPrank(user1, user1); // set sender and origin to user1
 
-    //     want.approve(address(maxiVault), DEPOSIT_AMT);
-    //     maxiVault.deposit(DEPOSIT_AMT);
-    //     uint256 shares = maxiVault.balanceOf(user1);
-    //     // increaseVaultWantBalance(10e8);
-    //     maxiVault.withdraw(shares);
-    //     // assertEq(want.balanceOf(user1), DEPOSIT_AMT * 2);
-
-    //     vm.stopPrank();
-    // }
+        want.approve(address(maxiVault), DEPOSIT_AMT);
+        maxiVault.deposit(DEPOSIT_AMT);
+        console2.log("User want bal before withdraw", want.balanceOf(address(user1)));
+        assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
+        assertEq(want.balanceOf(address(user1)), 0);
+        maxiVault.withdraw(1e8); //only 1e8 shares out of 10e8
+        assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT - 1e8);
+        assertEq(want.balanceOf(address(user1)), 1e8);
+        console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
+        vm.stopPrank();
+    }
 }

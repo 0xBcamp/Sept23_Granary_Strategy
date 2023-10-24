@@ -19,6 +19,11 @@ interface IERC20Extented is IERC20 {
     function decimals() external view returns (uint8);
 }
 
+error InvalidAToken();
+error DepositFailed();
+error NotAVault();
+error InvalidAmount();
+
 contract Strategy is Ownable {
     using SafeERC20 for IERC20Extented;
 
@@ -44,6 +49,13 @@ contract Strategy is Ownable {
     uint256 PERCENTAGE_BPS = 10000;
     uint256 REAPER_FEE_BPS = 1000;
 
+    uint256 totalLoanTaken;
+
+    modifier onlyVault() {
+        if (msg.sender != vault) revert NotAVault();
+        _;
+    }
+
     constructor(
         address _vault,
         address _want,
@@ -64,10 +76,12 @@ contract Strategy is Ownable {
         reaperVault = _reaperVault;
 
         (aToken,,) = IDataProvider(dataProvider).getReserveTokensAddresses(address(want));
+        if (aToken == address(0)) {
+            revert InvalidAToken();
+        }
     }
 
-    function deposit() external {
-        require(msg.sender == vault, "!vault");
+    function deposit() external onlyVault {
         _supplyAndBorrow();
         _depositToReaper();
     }
@@ -78,13 +92,14 @@ contract Strategy is Ownable {
         if (wantBal != 0) {
             IERC20Extented(want).approve(lendingPool, wantBal);
             ILendingPool(lendingPool).deposit(want, wantBal, address(this), 0);
-            console2.log("Depsoited Amount", wantBal);
             uint256 borrowAmount = _calculateBorrowAmount(wantBal); // get 50% of want in loanToken
-            console2.log("borrowAmount", borrowAmount);
+            uint256 balBefore = _balanceOfLoanToken();
             ILendingPool(lendingPool).borrow(loanToken, borrowAmount, 2, 0, address(this));
-            console2.log("Borrow success");
+            uint256 balAfter = _balanceOfLoanToken();
+            uint256 diff = balAfter - balBefore;
+            totalLoanTaken += diff; //Never account for any external deposits
+
             uint256 healthFactor = _checkHealthFactor();
-            console2.log("healthFactor", healthFactor);
             if (healthFactor < MIN_HEALTH_FACTOR) {
                 _adjustPosition();
             }
@@ -93,7 +108,7 @@ contract Strategy is Ownable {
 
     function _calculateBorrowAmount(uint256 _want) internal view returns (uint256) {
         uint256 loanTokenAmount = _convertToLoanToken(_want);
-        return loanTokenAmount;
+        return loanTokenAmount / 2; //borrrow only 50% for now
     }
 
     function _checkHealthFactor() internal view returns (uint256) {
@@ -105,28 +120,29 @@ contract Strategy is Ownable {
         uint256 loanTokenBal = IERC20Extented(loanToken).balanceOf(address(this));
         if (loanTokenBal != 0) {
             IERC20Extented(loanToken).approve(reaperVault, loanTokenBal);
-            IReaperVault(reaperVault).deposit(loanTokenBal, address(this));
+            uint256 shares = IReaperVault(reaperVault).deposit(loanTokenBal, address(this));
+            if (shares <= 0) {
+                revert DepositFailed();
+            }
         }
     }
 
     /**
      * @dev Withdraws funds and sends them back to the vault.
      */
-    function withdraw(uint256 _amount) external {
-        require(msg.sender == vault, "!vault");
-        _adjustPosition();
+    function withdraw(uint256 _amount) external onlyVault {
+        if (_amount == 0) revert InvalidAmount();
+        // _adjustPosition(); @audit not sure if we need this here because we will eventually repay loan in this fn
         uint256 currBal = _balanceOfWant();
-
         if (currBal < _amount) {
-            uint256 loanTokenAmountToWithdraw = _convertToLoanToken(_amount - currBal);
-            // reaper takes some fees let's assume 10%
-            loanTokenAmountToWithdraw =
-                loanTokenAmountToWithdraw - loanTokenAmountToWithdraw * REAPER_FEE_BPS / PERCENTAGE_BPS;
-            console2.log("loanTokenAmountToWithdraw", loanTokenAmountToWithdraw);
-            IReaperVault(reaperVault).withdraw(loanTokenAmountToWithdraw, address(this), address(this));
-            IERC20Extented(loanToken).approve(lendingPool, loanTokenAmountToWithdraw);
-            ILendingPool(lendingPool).repay(loanToken, loanTokenAmountToWithdraw, 2, address(this));
-            ILendingPool(lendingPool).withdraw(want, _amount - currBal, address(this));
+            uint256 loanTokenAmount = _convertToLoanToken(_amount - currBal);
+            if (_amount > totalLoanTaken) {
+                //TODO:Need to withdraw from aave to payback
+            }
+            uint256 loanTokenRepayAmount = _withdrawFromReaper(loanTokenAmount);
+            uint256 wantAmountToWithdraw = _amount - currBal;
+            _repayAndWithdrawFromAave(loanTokenRepayAmount, wantAmountToWithdraw);
+            //TODO: after repay and withdraw there is a high chance that health factor will be less than 1.5 so we need to adjust position.
             _adjustPosition();
         }
 
@@ -134,6 +150,19 @@ contract Strategy is Ownable {
     }
 
     /* --------------------------- INTERNAL FUNCTIONS --------------------------- */
+    function _repayAndWithdrawFromAave(uint256 _repayAmount, uint256 _wantAmount) internal {
+        IERC20Extented(loanToken).approve(lendingPool, _repayAmount);
+        ILendingPool(lendingPool).repay(loanToken, _repayAmount, 2, address(this));
+        totalLoanTaken -= _repayAmount;
+        ILendingPool(lendingPool).withdraw(want, _wantAmount, address(this));
+    }
+
+    function _withdrawFromReaper(uint256 _amount) internal returns (uint256) {
+        // reaper takes some fees let's assume 10%. is this a correct way to handle this?
+        _amount = _amount - _amount * REAPER_FEE_BPS / PERCENTAGE_BPS; // amount after reaper fees
+        IReaperVault(reaperVault).withdraw(_amount, address(this), address(this));
+        return _balanceOfLoanToken(); //should have loantoken after withdraw
+    }
 
     function _adjustPosition() internal view {
         (uint256 supplyBal, uint256 borrowBal) = _userReserves(want);
@@ -176,6 +205,10 @@ contract Strategy is Ownable {
         return borrowAmount;
     }
 
+    function _balanceOfLoanToken() internal view returns (uint256) {
+        return IERC20Extented(loanToken).balanceOf(address(this));
+    }
+
     function _assetStakedInVault() internal view returns (uint256) {
         IReaperVault _reaperVault = IReaperVault(reaperVault);
         return _reaperVault.convertToAssets(_reaperVault.balanceOf(address(this)));
@@ -205,7 +238,6 @@ contract Strategy is Ownable {
         uint256 decimals = 10 ** remainingDecimals;
 
         uint256 wantTokenPrice = IPriceOracle(priceOracle).getAssetPrice(want) * FEED_PRECISION; // covert to 18 decimals
-
         uint256 loanTokenPrice = IPriceOracle(priceOracle).getAssetPrice(loanToken) * FEED_PRECISION; // covert to 18 decimals
         uint256 loanTokenAmount;
 
@@ -214,9 +246,27 @@ contract Strategy is Ownable {
         } else {
             loanTokenAmount = _wantAmount * wantTokenPrice / loanTokenPrice;
         }
-        return loanTokenAmount / 2;
+        return loanTokenAmount;
     }
 
+    // function _convertToWant(uint256 _loanTokenAmount) internal view returns (uint256) {
+    //     uint256 remainingDecimals = 18 - IERC20Extented(loanToken).decimals();
+    //     uint256 decimals = 10 ** remainingDecimals;
+
+    //     uint256 wantTokenPrice = IPriceOracle(priceOracle).getAssetPrice(want) * FEED_PRECISION; // covert to 18 decimals
+    //     console2.log("wantTokenPrice", wantTokenPrice);
+    //     uint256 loanTokenPrice = IPriceOracle(priceOracle).getAssetPrice(loanToken) * FEED_PRECISION; // covert to 18 decimals
+    //     console2.log("loanTokenPrice", loanTokenPrice);
+    //     uint256 wantAmount;
+
+    //     if (decimals != 0) {
+    //         wantAmount = _loanTokenAmount * decimals * loanTokenPrice / wantTokenPrice;
+    //     } else {
+    //         wantAmount = _loanTokenAmount * loanTokenPrice / wantTokenPrice;
+    //     }
+    //     console2.log("wantAmount", wantAmount);
+    //     return wantAmount;
+    // }
     /* ------------------------------- PUBLIC VIEW FUNCTIONS ------------------------------ */
 
     function balanceOf() public view returns (uint256) {
