@@ -106,7 +106,7 @@ contract Strategy is Ownable {
         }
     }
 
-    function _calculateBorrowAmount(uint256 _want) internal view returns (uint256) {
+    function _calculateBorrowAmount(uint256 _want) internal returns (uint256) {
         uint256 loanTokenAmount = _convertToLoanToken(_want);
         return loanTokenAmount / 2; //borrrow only 50% for now
     }
@@ -131,14 +131,21 @@ contract Strategy is Ownable {
      * @dev Withdraws funds and sends them back to the vault.
      */
     function withdraw(uint256 _amount) external onlyVault {
+        console2.log(_convertToWantToken(26822531084149283595854));
         if (_amount == 0) revert InvalidAmount();
         // _adjustPosition(); @audit not sure if we need this here because we will eventually repay loan in this fn
         uint256 currBal = _balanceOfWant();
         if (currBal < _amount) {
-            uint256 loanTokenAmount = _convertToLoanToken(_amount - currBal);
-            if (_amount > totalLoanTaken) {
-                //TODO:Need to withdraw from aave to payback
+            uint256 amountInLoanToken = _convertToLoanToken(_amount);
+            if (amountInLoanToken > totalLoanTaken) {
+                uint256 diff = amountInLoanToken - totalLoanTaken;
+
+                _repayAndWithdrawFromAave(diff, _amount);
+                ILendingPool(lendingPool).repay(loanToken, diff, 2, address(this));
+
+                console2.log("want token received", _balanceOfWant());
             }
+            uint256 loanTokenAmount = _convertToLoanToken(_amount - currBal);
             uint256 loanTokenRepayAmount = _withdrawFromReaper(loanTokenAmount);
             uint256 wantAmountToWithdraw = _amount - currBal;
             _repayAndWithdrawFromAave(loanTokenRepayAmount, wantAmountToWithdraw);
@@ -232,41 +239,58 @@ contract Strategy is Ownable {
         return profitInWant / FEED_PRECISION; // Normalize to 8 decimals
     }
 
-    function _convertToLoanToken(uint256 _wantAmount) internal view returns (uint256) {
-        // NOTE:Not handling the case if loanToken is not 18 decimals
-        uint256 remainingDecimals = 18 - IERC20Extented(want).decimals();
-        uint256 decimals = 10 ** remainingDecimals;
+    function _convertToLoanToken(uint256 _wantAmount) internal returns (uint256) {
+        uint256 decimalPrecisionWantToken = _calculateDecimals(want);
+        uint256 decimalPrecisionLoanToken = _calculateDecimals(loanToken);
 
         uint256 wantTokenPrice = IPriceOracle(priceOracle).getAssetPrice(want) * FEED_PRECISION; // covert to 18 decimals
         uint256 loanTokenPrice = IPriceOracle(priceOracle).getAssetPrice(loanToken) * FEED_PRECISION; // covert to 18 decimals
         uint256 loanTokenAmount;
 
-        if (decimals != 0) {
-            loanTokenAmount = _wantAmount * decimals * wantTokenPrice / loanTokenPrice;
+        if (decimalPrecisionWantToken != 0 && decimalPrecisionLoanToken == 0) {
+            loanTokenAmount = _wantAmount * wantTokenPrice / loanTokenPrice / decimalPrecisionLoanToken;
+        } else if (decimalPrecisionWantToken == 0 && decimalPrecisionLoanToken != 0) {
+            loanTokenAmount = _wantAmount * decimalPrecisionWantToken * wantTokenPrice / loanTokenPrice;
+        } else if (decimalPrecisionWantToken != 0 && decimalPrecisionLoanToken != 0) {
+            loanTokenAmount =
+                _wantAmount * decimalPrecisionWantToken * wantTokenPrice / loanTokenPrice / decimalPrecisionLoanToken;
         } else {
             loanTokenAmount = _wantAmount * wantTokenPrice / loanTokenPrice;
         }
+        console2.log("loan amount", loanTokenAmount);
         return loanTokenAmount;
     }
 
-    // function _convertToWant(uint256 _loanTokenAmount) internal view returns (uint256) {
-    //     uint256 remainingDecimals = 18 - IERC20Extented(loanToken).decimals();
-    //     uint256 decimals = 10 ** remainingDecimals;
+    function _calculateDecimals(address token) internal returns (uint256) {
+        uint256 remainingDecimals = 18 - IERC20Extented(token).decimals();
+        uint256 _decimals = 10 ** remainingDecimals;
+        return _decimals;
+    }
 
-    //     uint256 wantTokenPrice = IPriceOracle(priceOracle).getAssetPrice(want) * FEED_PRECISION; // covert to 18 decimals
-    //     console2.log("wantTokenPrice", wantTokenPrice);
-    //     uint256 loanTokenPrice = IPriceOracle(priceOracle).getAssetPrice(loanToken) * FEED_PRECISION; // covert to 18 decimals
-    //     console2.log("loanTokenPrice", loanTokenPrice);
-    //     uint256 wantAmount;
+    function _convertToWantToken(uint256 _loanTokenAmount) internal returns (uint256) {
+        uint256 decimalPrecisionWantToken = _calculateDecimals(want);
+        uint256 decimalPrecisionLoanToken = _calculateDecimals(loanToken);
 
-    //     if (decimals != 0) {
-    //         wantAmount = _loanTokenAmount * decimals * loanTokenPrice / wantTokenPrice;
-    //     } else {
-    //         wantAmount = _loanTokenAmount * loanTokenPrice / wantTokenPrice;
-    //     }
-    //     console2.log("wantAmount", wantAmount);
-    //     return wantAmount;
-    // }
+        uint256 wantTokenPrice = IPriceOracle(priceOracle).getAssetPrice(want) * FEED_PRECISION; // covert to 18 decimals
+        console2.log("wantTokenPrice", wantTokenPrice);
+        uint256 loanTokenPrice = IPriceOracle(priceOracle).getAssetPrice(loanToken) * FEED_PRECISION; // covert to 18 decimals
+        console2.log("loanTokenPrice", loanTokenPrice);
+        uint256 wantAmount;
+
+        if (decimalPrecisionWantToken != 0 && decimalPrecisionLoanToken == 0) {
+            wantAmount = _loanTokenAmount * loanTokenPrice / wantTokenPrice / decimalPrecisionWantToken;
+        } else if (decimalPrecisionWantToken == 0 && decimalPrecisionLoanToken != 0) {
+            wantAmount = _loanTokenAmount * decimalPrecisionLoanToken * loanTokenPrice / wantTokenPrice;
+            //How much is 1e36 / 2e18 = 500000000000000000
+        } else if (decimalPrecisionWantToken != 0 && decimalPrecisionLoanToken != 0) {
+            wantAmount = _loanTokenAmount * decimalPrecisionLoanToken * loanTokenPrice / wantTokenPrice
+                / decimalPrecisionWantToken;
+        } else {
+            wantAmount = _loanTokenAmount * loanTokenPrice / wantTokenPrice;
+        }
+        console2.log("wantAmount", wantAmount);
+        return wantAmount;
+    }
     /* ------------------------------- PUBLIC VIEW FUNCTIONS ------------------------------ */
 
     function balanceOf() public view returns (uint256) {
