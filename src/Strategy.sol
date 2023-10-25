@@ -131,24 +131,32 @@ contract Strategy is Ownable {
      * @dev Withdraws funds and sends them back to the vault.
      */
     function withdraw(uint256 _amount) external onlyVault {
-        console2.log(_convertToWantToken(26822531084149283595854));
         if (_amount == 0) revert InvalidAmount();
         // _adjustPosition(); @audit not sure if we need this here because we will eventually repay loan in this fn
         uint256 currBal = _balanceOfWant();
         if (currBal < _amount) {
             uint256 amountInLoanToken = _convertToLoanToken(_amount);
+            uint256 sharesToWithdraw;
+            console2.log("amountInLoanToken", amountInLoanToken);
             if (amountInLoanToken > totalLoanTaken) {
                 uint256 diff = amountInLoanToken - totalLoanTaken;
+                console2.log("diff", diff);
+                sharesToWithdraw = IReaperVault(reaperVault).convertToShares(diff);
+                console2.log("sharesToWithdraw", sharesToWithdraw);
 
-                _repayAndWithdrawFromAave(diff, _amount);
-                ILendingPool(lendingPool).repay(loanToken, diff, 2, address(this));
-
-                console2.log("want token received", _balanceOfWant());
+                uint256 wantAmountToWithdraw = _convertToWantToken(diff);
+                console2.log("wantAmountToWithdraw", wantAmountToWithdraw);
+                uint256 balOfLoanToken = _withdrawFromReaper(sharesToWithdraw);
+                console2.log("balOfLoanToken", balOfLoanToken);
+                uint256 profit = balOfLoanToken - _convertToLoanToken(wantAmountToWithdraw);
+                _repayAndWithdrawFromAave(balOfLoanToken - profit, wantAmountToWithdraw);
+            } else {
+                uint256 loanTokenAmount = _convertToLoanToken(_amount - currBal);
+                sharesToWithdraw = IReaperVault(reaperVault).convertToShares(loanTokenAmount);
+                uint256 loanTokenRepayAmount = _withdrawFromReaper(sharesToWithdraw);
+                uint256 wantAmountToWithdraw = _amount - currBal;
+                _repayAndWithdrawFromAave(loanTokenRepayAmount, wantAmountToWithdraw);
             }
-            uint256 loanTokenAmount = _convertToLoanToken(_amount - currBal);
-            uint256 loanTokenRepayAmount = _withdrawFromReaper(loanTokenAmount);
-            uint256 wantAmountToWithdraw = _amount - currBal;
-            _repayAndWithdrawFromAave(loanTokenRepayAmount, wantAmountToWithdraw);
             //TODO: after repay and withdraw there is a high chance that health factor will be less than 1.5 so we need to adjust position.
             _adjustPosition();
         }
@@ -157,11 +165,11 @@ contract Strategy is Ownable {
     }
 
     /* --------------------------- INTERNAL FUNCTIONS --------------------------- */
-    function _repayAndWithdrawFromAave(uint256 _repayAmount, uint256 _wantAmount) internal {
+    function _repayAndWithdrawFromAave(uint256 _repayAmount, uint256 _wantAmountToWithdraw) internal {
         IERC20Extented(loanToken).approve(lendingPool, _repayAmount);
         ILendingPool(lendingPool).repay(loanToken, _repayAmount, 2, address(this));
         totalLoanTaken -= _repayAmount;
-        ILendingPool(lendingPool).withdraw(want, _wantAmount, address(this));
+        ILendingPool(lendingPool).withdraw(want, _wantAmountToWithdraw, address(this));
     }
 
     function _withdrawFromReaper(uint256 _amount) internal returns (uint256) {
@@ -257,7 +265,6 @@ contract Strategy is Ownable {
         } else {
             loanTokenAmount = _wantAmount * wantTokenPrice / loanTokenPrice;
         }
-        console2.log("loan amount", loanTokenAmount);
         return loanTokenAmount;
     }
 
@@ -272,9 +279,7 @@ contract Strategy is Ownable {
         uint256 decimalPrecisionLoanToken = _calculateDecimals(loanToken);
 
         uint256 wantTokenPrice = IPriceOracle(priceOracle).getAssetPrice(want) * FEED_PRECISION; // covert to 18 decimals
-        console2.log("wantTokenPrice", wantTokenPrice);
         uint256 loanTokenPrice = IPriceOracle(priceOracle).getAssetPrice(loanToken) * FEED_PRECISION; // covert to 18 decimals
-        console2.log("loanTokenPrice", loanTokenPrice);
         uint256 wantAmount;
 
         if (decimalPrecisionWantToken != 0 && decimalPrecisionLoanToken == 0) {
@@ -288,7 +293,6 @@ contract Strategy is Ownable {
         } else {
             wantAmount = _loanTokenAmount * loanTokenPrice / wantTokenPrice;
         }
-        console2.log("wantAmount", wantAmount);
         return wantAmount;
     }
     /* ------------------------------- PUBLIC VIEW FUNCTIONS ------------------------------ */
@@ -297,7 +301,7 @@ contract Strategy is Ownable {
         return _balanceOfWant() + _balanceOfPool() + _earned();
     }
 
-    function adjustPosition() public view onlyOwner {
+    function adjustPosition() public onlyOwner {
         _adjustPosition();
     }
 }

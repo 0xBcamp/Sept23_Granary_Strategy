@@ -99,4 +99,20 @@ contract VaultTest is ForkHelper {
         console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
         vm.stopPrank();
     }
+
+    function test_shouldWithdrawAllShares() public fundUsers {
+        vm.startPrank(user1, user1); // set sender and origin to user1
+
+        want.approve(address(maxiVault), DEPOSIT_AMT);
+        maxiVault.deposit(DEPOSIT_AMT);
+        console2.log("User want bal before withdraw", want.balanceOf(address(user1)));
+        assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
+        assertEq(want.balanceOf(address(user1)), 0);
+
+        // maxiVault.withdraw(maxiVault.balanceOf(user1 - 2e8));
+        maxiVault.withdraw(10e8);
+        assertEq(maxiVault.balanceOf(user1), 0);
+        console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
+        vm.stopPrank();
+    }
 }
