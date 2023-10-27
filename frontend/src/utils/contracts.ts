@@ -3,34 +3,254 @@ export const vaultContractConfig = {
   address: "0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f",
   abi: [
     {
+      inputs: [
+        {
+          internalType: "address",
+          name: "_token",
+          type: "address",
+        },
+        {
+          internalType: "string",
+          name: "_name",
+          type: "string",
+        },
+        {
+          internalType: "string",
+          name: "_symbol",
+          type: "string",
+        },
+        {
+          internalType: "uint256",
+          name: "_depositFee",
+          type: "uint256",
+        },
+        {
+          internalType: "uint256",
+          name: "_tvlCap",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "nonpayable",
+      type: "constructor",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "target",
+          type: "address",
+        },
+      ],
+      name: "AddressEmptyCode",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "account",
+          type: "address",
+        },
+      ],
+      name: "AddressInsufficientBalance",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "spender",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "allowance",
+          type: "uint256",
+        },
+        {
+          internalType: "uint256",
+          name: "needed",
+          type: "uint256",
+        },
+      ],
+      name: "ERC20InsufficientAllowance",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "sender",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "balance",
+          type: "uint256",
+        },
+        {
+          internalType: "uint256",
+          name: "needed",
+          type: "uint256",
+        },
+      ],
+      name: "ERC20InsufficientBalance",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "approver",
+          type: "address",
+        },
+      ],
+      name: "ERC20InvalidApprover",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "receiver",
+          type: "address",
+        },
+      ],
+      name: "ERC20InvalidReceiver",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "sender",
+          type: "address",
+        },
+      ],
+      name: "ERC20InvalidSender",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "spender",
+          type: "address",
+        },
+      ],
+      name: "ERC20InvalidSpender",
+      type: "error",
+    },
+    {
+      inputs: [],
+      name: "FailedInnerCall",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "owner",
+          type: "address",
+        },
+      ],
+      name: "OwnableInvalidOwner",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "account",
+          type: "address",
+        },
+      ],
+      name: "OwnableUnauthorizedAccount",
+      type: "error",
+    },
+    {
+      inputs: [],
+      name: "ReentrancyGuardReentrantCall",
+      type: "error",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "token",
+          type: "address",
+        },
+      ],
+      name: "SafeERC20FailedOperation",
+      type: "error",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "owner",
+          type: "address",
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "spender",
+          type: "address",
+        },
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "value",
+          type: "uint256",
+        },
+      ],
+      name: "Approval",
+      type: "event",
+    },
+    {
       anonymous: false,
       inputs: [
         {
           indexed: false,
           internalType: "address",
-          name: "who",
+          name: "user",
           type: "address",
         },
         {
           indexed: false,
-          internalType: "bytes4",
-          name: "fsig",
-          type: "bytes4",
-        },
-        {
-          indexed: false,
-          internalType: "bytes32",
-          name: "keysHash",
-          type: "bytes32",
+          internalType: "uint256",
+          name: "amount",
+          type: "uint256",
         },
         {
           indexed: false,
           internalType: "uint256",
-          name: "slot",
+          name: "total",
           type: "uint256",
         },
       ],
-      name: "SlotFound",
+      name: "DepositsIncremented",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "previousOwner",
+          type: "address",
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "newOwner",
+          type: "address",
+        },
+      ],
+      name: "OwnershipTransferred",
       type: "event",
     },
     {
@@ -39,17 +259,36 @@ export const vaultContractConfig = {
         {
           indexed: false,
           internalType: "address",
-          name: "who",
+          name: "user",
+          type: "address",
+        },
+      ],
+      name: "TermsAccepted",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "from",
+          type: "address",
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "to",
           type: "address",
         },
         {
           indexed: false,
           internalType: "uint256",
-          name: "slot",
+          name: "value",
           type: "uint256",
         },
       ],
-      name: "WARNING_UninitedSlot",
+      name: "Transfer",
       type: "event",
     },
     {
@@ -57,12 +296,12 @@ export const vaultContractConfig = {
       inputs: [
         {
           indexed: false,
-          internalType: "string",
-          name: "",
-          type: "string",
+          internalType: "uint256",
+          name: "newTvlCap",
+          type: "uint256",
         },
       ],
-      name: "log",
+      name: "TvlCapUpdated",
       type: "event",
     },
     {
@@ -71,354 +310,52 @@ export const vaultContractConfig = {
         {
           indexed: false,
           internalType: "address",
-          name: "",
+          name: "user",
           type: "address",
         },
-      ],
-      name: "log_address",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
         {
           indexed: false,
-          internalType: "uint256[]",
-          name: "val",
-          type: "uint256[]",
+          internalType: "uint256",
+          name: "amount",
+          type: "uint256",
+        },
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "total",
+          type: "uint256",
         },
       ],
-      name: "log_array",
+      name: "WithdrawalsIncremented",
       type: "event",
     },
     {
-      anonymous: false,
-      inputs: [
+      inputs: [],
+      name: "PERCENT_DIVISOR",
+      outputs: [
         {
-          indexed: false,
-          internalType: "int256[]",
-          name: "val",
-          type: "int256[]",
-        },
-      ],
-      name: "log_array",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "address[]",
-          name: "val",
-          type: "address[]",
-        },
-      ],
-      name: "log_array",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "bytes",
+          internalType: "uint256",
           name: "",
-          type: "bytes",
+          type: "uint256",
         },
       ],
-      name: "log_bytes",
-      type: "event",
+      stateMutability: "view",
+      type: "function",
     },
     {
-      anonymous: false,
       inputs: [
         {
-          indexed: false,
-          internalType: "bytes32",
-          name: "",
-          type: "bytes32",
-        },
-      ],
-      name: "log_bytes32",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "int256",
-          name: "",
-          type: "int256",
-        },
-      ],
-      name: "log_int",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
           internalType: "address",
-          name: "val",
+          name: "owner",
+          type: "address",
+        },
+        {
+          internalType: "address",
+          name: "spender",
           type: "address",
         },
       ],
-      name: "log_named_address",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "uint256[]",
-          name: "val",
-          type: "uint256[]",
-        },
-      ],
-      name: "log_named_array",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "int256[]",
-          name: "val",
-          type: "int256[]",
-        },
-      ],
-      name: "log_named_array",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "address[]",
-          name: "val",
-          type: "address[]",
-        },
-      ],
-      name: "log_named_array",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "bytes",
-          name: "val",
-          type: "bytes",
-        },
-      ],
-      name: "log_named_bytes",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "bytes32",
-          name: "val",
-          type: "bytes32",
-        },
-      ],
-      name: "log_named_bytes32",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "int256",
-          name: "val",
-          type: "int256",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "decimals",
-          type: "uint256",
-        },
-      ],
-      name: "log_named_decimal_int",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "val",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "decimals",
-          type: "uint256",
-        },
-      ],
-      name: "log_named_decimal_uint",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "int256",
-          name: "val",
-          type: "int256",
-        },
-      ],
-      name: "log_named_int",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "string",
-          name: "val",
-          type: "string",
-        },
-      ],
-      name: "log_named_string",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "key",
-          type: "string",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "val",
-          type: "uint256",
-        },
-      ],
-      name: "log_named_uint",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "string",
-          name: "",
-          type: "string",
-        },
-      ],
-      name: "log_string",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
-      name: "log_uint",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "bytes",
-          name: "",
-          type: "bytes",
-        },
-      ],
-      name: "logs",
-      type: "event",
-    },
-    {
-      inputs: [],
-      name: "DEPOSIT_AMT",
+      name: "allowance",
       outputs: [
         {
           internalType: "uint256",
@@ -430,99 +367,19 @@ export const vaultContractConfig = {
       type: "function",
     },
     {
-      inputs: [],
-      name: "IS_TEST",
-      outputs: [
+      inputs: [
         {
-          internalType: "bool",
-          name: "",
-          type: "bool",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "PRECISION_DECIMALS",
-      outputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "WBTC_CAP",
-      outputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "dataProvider",
-      outputs: [
-        {
-          internalType: "contract IDataProvider",
-          name: "",
+          internalType: "address",
+          name: "spender",
           type: "address",
         },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "excludeArtifacts",
-      outputs: [
         {
-          internalType: "string[]",
-          name: "excludedArtifacts_",
-          type: "string[]",
+          internalType: "uint256",
+          name: "value",
+          type: "uint256",
         },
       ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "excludeContracts",
-      outputs: [
-        {
-          internalType: "address[]",
-          name: "excludedContracts_",
-          type: "address[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "excludeSenders",
-      outputs: [
-        {
-          internalType: "address[]",
-          name: "excludedSenders_",
-          type: "address[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "failed",
+      name: "approve",
       outputs: [
         {
           internalType: "bool",
@@ -535,10 +392,230 @@ export const vaultContractConfig = {
     },
     {
       inputs: [],
-      name: "incentiveController",
+      name: "available",
       outputs: [
         {
-          internalType: "contract IAaveIncentives",
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "balance",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "account",
+          type: "address",
+        },
+      ],
+      name: "balanceOf",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "constructionTime",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+      ],
+      name: "cumulativeDeposits",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+      ],
+      name: "cumulativeWithdrawals",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "decimals",
+      outputs: [
+        {
+          internalType: "uint8",
+          name: "",
+          type: "uint8",
+        },
+      ],
+      stateMutability: "pure",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "_amount",
+          type: "uint256",
+        },
+      ],
+      name: "deposit",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "depositAll",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "depositFee",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "earn",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "getPricePerFullShare",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "_token",
+          type: "address",
+        },
+      ],
+      name: "inCaseTokensGetStuck",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "_strategy",
+          type: "address",
+        },
+      ],
+      name: "initialize",
+      outputs: [
+        {
+          internalType: "bool",
+          name: "",
+          type: "bool",
+        },
+      ],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "initialized",
+      outputs: [
+        {
+          internalType: "bool",
+          name: "",
+          type: "bool",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "name",
+      outputs: [
+        {
+          internalType: "string",
+          name: "",
+          type: "string",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "owner",
+      outputs: [
+        {
+          internalType: "address",
           name: "",
           type: "address",
         },
@@ -548,72 +625,14 @@ export const vaultContractConfig = {
     },
     {
       inputs: [],
-      name: "lendingPool",
-      outputs: [
-        {
-          internalType: "contract ILendingPool",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
+      name: "removeTvlCap",
+      outputs: [],
+      stateMutability: "nonpayable",
       type: "function",
     },
     {
       inputs: [],
-      name: "loanToken",
-      outputs: [
-        {
-          internalType: "contract IERC20Extented",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "maxiVault",
-      outputs: [
-        {
-          internalType: "contract MaxiVault",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "priceOracle",
-      outputs: [
-        {
-          internalType: "contract IPriceOracle",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "reaperVault",
-      outputs: [
-        {
-          internalType: "contract IReaperVault",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "setUp",
+      name: "renounceOwnership",
       outputs: [],
       stateMutability: "nonpayable",
       type: "function",
@@ -623,175 +642,6 @@ export const vaultContractConfig = {
       name: "strategy",
       outputs: [
         {
-          internalType: "contract Strategy",
-          name: "",
-          type: "address",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "targetArtifactSelectors",
-      outputs: [
-        {
-          components: [
-            {
-              internalType: "address",
-              name: "addr",
-              type: "address",
-            },
-            {
-              internalType: "bytes4[]",
-              name: "selectors",
-              type: "bytes4[]",
-            },
-          ],
-          internalType: "struct StdInvariant.FuzzSelector[]",
-          name: "targetedArtifactSelectors_",
-          type: "tuple[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "targetArtifacts",
-      outputs: [
-        {
-          internalType: "string[]",
-          name: "targetedArtifacts_",
-          type: "string[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "targetContracts",
-      outputs: [
-        {
-          internalType: "address[]",
-          name: "targetedContracts_",
-          type: "address[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "targetInterfaces",
-      outputs: [
-        {
-          components: [
-            {
-              internalType: "address",
-              name: "addr",
-              type: "address",
-            },
-            {
-              internalType: "string[]",
-              name: "artifacts",
-              type: "string[]",
-            },
-          ],
-          internalType: "struct StdInvariant.FuzzInterface[]",
-          name: "targetedInterfaces_",
-          type: "tuple[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "targetSelectors",
-      outputs: [
-        {
-          components: [
-            {
-              internalType: "address",
-              name: "addr",
-              type: "address",
-            },
-            {
-              internalType: "bytes4[]",
-              name: "selectors",
-              type: "bytes4[]",
-            },
-          ],
-          internalType: "struct StdInvariant.FuzzSelector[]",
-          name: "targetedSelectors_",
-          type: "tuple[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "targetSenders",
-      outputs: [
-        {
-          internalType: "address[]",
-          name: "targetedSenders_",
-          type: "address[]",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "test_constructor",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "test_depositShoulFailIfAmountIsZero",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "test_mintSharesOnDepositSuccess",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "test_shouldFailWhenDepositCapIsReached",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "test_shouldIncreaseCummulativeDeposit",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "test_shouldReceiveReaperVaultTokenOnDeposit",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "user1",
-      outputs: [
-        {
           internalType: "address",
           name: "",
           type: "address",
@@ -802,10 +652,23 @@ export const vaultContractConfig = {
     },
     {
       inputs: [],
-      name: "user2",
+      name: "symbol",
       outputs: [
         {
-          internalType: "address",
+          internalType: "string",
+          name: "",
+          type: "string",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "token",
+      outputs: [
+        {
+          internalType: "contract IERC20",
           name: "",
           type: "address",
         },
@@ -815,15 +678,140 @@ export const vaultContractConfig = {
     },
     {
       inputs: [],
-      name: "want",
+      name: "totalSupply",
       outputs: [
         {
-          internalType: "contract IERC20Extented",
+          internalType: "uint256",
           name: "",
-          type: "address",
+          type: "uint256",
         },
       ],
       stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "to",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "value",
+          type: "uint256",
+        },
+      ],
+      name: "transfer",
+      outputs: [
+        {
+          internalType: "bool",
+          name: "",
+          type: "bool",
+        },
+      ],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "from",
+          type: "address",
+        },
+        {
+          internalType: "address",
+          name: "to",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "value",
+          type: "uint256",
+        },
+      ],
+      name: "transferFrom",
+      outputs: [
+        {
+          internalType: "bool",
+          name: "",
+          type: "bool",
+        },
+      ],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "newOwner",
+          type: "address",
+        },
+      ],
+      name: "transferOwnership",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "tvlCap",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "fee",
+          type: "uint256",
+        },
+      ],
+      name: "updateDepositFee",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "_newTvlCap",
+          type: "uint256",
+        },
+      ],
+      name: "updateTvlCap",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "_shares",
+          type: "uint256",
+        },
+      ],
+      name: "withdraw",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "withdrawAll",
+      outputs: [],
+      stateMutability: "nonpayable",
       type: "function",
     },
   ],

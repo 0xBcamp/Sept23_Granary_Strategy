@@ -48,6 +48,7 @@ contract Strategy is Ownable {
     uint256 MIN_HEALTH_FACTOR = 1500000000000000000;
     uint256 PERCENTAGE_BPS = 10000;
     uint256 REAPER_FEE_BPS = 1000;
+    uint256 SLIPPAGE_BPS = 20; //0.2%
 
     uint256 totalLoanTaken;
 
@@ -137,17 +138,25 @@ contract Strategy is Ownable {
         if (currBal < _amount) {
             uint256 amountInLoanToken = _convertToLoanToken(_amount);
             uint256 sharesToWithdraw;
+            (, uint256 totalLoan) = _userReserves(loanToken); //return loan with interest
             console2.log("amountInLoanToken", amountInLoanToken);
-            if (amountInLoanToken > totalLoanTaken) {
-                uint256 diff = amountInLoanToken - totalLoanTaken;
+            if (amountInLoanToken > totalLoan) {
+                uint256 diff = amountInLoanToken - totalLoan; // amount to withdraw from reaper and repay to aave
                 console2.log("diff", diff);
-                sharesToWithdraw = IReaperVault(reaperVault).convertToShares(diff);
+                sharesToWithdraw = IReaperVault(reaperVault).convertToShares(diff); //convert amount into shares
                 console2.log("sharesToWithdraw", sharesToWithdraw);
-
                 uint256 wantAmountToWithdraw = _convertToWantToken(diff);
                 console2.log("wantAmountToWithdraw", wantAmountToWithdraw);
                 uint256 balOfLoanToken = _withdrawFromReaper(sharesToWithdraw);
                 console2.log("balOfLoanToken", balOfLoanToken);
+                uint256 amountAfterSlippageConsideration =
+                    (_convertToLoanToken(wantAmountToWithdraw) * SLIPPAGE_BPS) / PERCENTAGE_BPS;
+                console2.log("amountAfterSlippageConsideration", amountAfterSlippageConsideration);
+                // check for loss from reaper
+                if (balOfLoanToken < amountAfterSlippageConsideration) {
+                    // check if loss is in the slippage range
+                    // we have a loss
+                }
                 uint256 profit = balOfLoanToken - _convertToLoanToken(wantAmountToWithdraw);
                 _repayAndWithdrawFromAave(balOfLoanToken - profit, wantAmountToWithdraw);
             } else {
@@ -172,10 +181,8 @@ contract Strategy is Ownable {
         ILendingPool(lendingPool).withdraw(want, _wantAmountToWithdraw, address(this));
     }
 
-    function _withdrawFromReaper(uint256 _amount) internal returns (uint256) {
-        // reaper takes some fees let's assume 10%. is this a correct way to handle this?
-        _amount = _amount - _amount * REAPER_FEE_BPS / PERCENTAGE_BPS; // amount after reaper fees
-        IReaperVault(reaperVault).withdraw(_amount, address(this), address(this));
+    function _withdrawFromReaper(uint256 _shares) internal returns (uint256) {
+        IReaperVault(reaperVault).withdraw(_shares, address(this), address(this));
         return _balanceOfLoanToken(); //should have loantoken after withdraw
     }
 
