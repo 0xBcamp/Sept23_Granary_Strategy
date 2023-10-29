@@ -39,7 +39,7 @@ contract ForkHelper is Test {
     Strategy public strategy;
 
     function setUp() public virtual {
-        string memory rpc = vm.envString("RPC_URL");
+        string memory rpc = vm.envString("RPC_URL_ALCHEMY");
         uint256 optimismFork = vm.createSelectFork(rpc, 110757864);
         assertEq(vm.activeFork(), optimismFork);
 

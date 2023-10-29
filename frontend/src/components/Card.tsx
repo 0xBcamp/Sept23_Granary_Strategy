@@ -52,7 +52,8 @@ const Card = () => {
   } = useContractWrite(depositConfig);
 
   const handleDeposit = () => {
-    writeApprove?.();
+    // writeApprove?.();
+    console.log("approve complete");
     writeDeposit?.();
   };
   // Withdraw actions
@@ -76,7 +77,7 @@ const Card = () => {
     writeWithdraw?.();
   };
   return (
-    <div className="w-[400px] space-y-4 p-5 h-fit bg-[#FFDFDF] rounded-md">
+    <div className="w-[400px] space-y-4 p-5 h-fit bg-blue-300 rounded-md">
       <div className=" flex justify-around items-center">
         <img src={wbtcLogo} className="object-cover h-10 w-10" alt="Logo" />
         <h1 className="text-lg font-serif font-semibold flex">
@@ -132,8 +133,15 @@ const Card = () => {
                 Withdraw
               </button>
             </div>
-
+            {isPendingApprove && <p>Approving...</p>}
+            {isSuccessApprove && <p>Approved ✅</p>}
+            {isLoadingDeposit && <p>Depositing...</p>}
+            {isSuccessDeposit && <p>Deposited ✅</p>}
+            {isLoadingWithdraw && <p>Withdrawing...</p>}
+            {isSuccessWithdraw && <p>Withdrawn ✅</p>}
             {isErrorApprove && <p>ERROR 🔴</p>}
+            {isErrorDeposit && <p>ERROR 🔴</p>}
+            {isErrorWithdraw && <p>ERROR 🔴</p>}
           </div>
         </>
       )}

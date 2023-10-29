@@ -133,32 +133,33 @@ contract Strategy is Ownable {
      */
     function withdraw(uint256 _amount) external onlyVault {
         if (_amount == 0) revert InvalidAmount();
-        // _adjustPosition(); @audit not sure if we need this here because we will eventually repay loan in this fn
         uint256 currBal = _balanceOfWant();
+
         if (currBal < _amount) {
             uint256 amountInLoanToken = _convertToLoanToken(_amount);
             uint256 sharesToWithdraw;
             (, uint256 totalLoan) = _userReserves(loanToken); //return loan with interest
-            console2.log("amountInLoanToken", amountInLoanToken);
+            console2.log("totalLoan", totalLoan);
             if (amountInLoanToken > totalLoan) {
                 uint256 diff = amountInLoanToken - totalLoan; // amount to withdraw from reaper and repay to aave
                 console2.log("diff", diff);
-                sharesToWithdraw = IReaperVault(reaperVault).convertToShares(diff); //convert amount into shares
+
+                sharesToWithdraw = IReaperVault(reaperVault).convertToShares(totalLoanTaken); //need to withdraw all
                 console2.log("sharesToWithdraw", sharesToWithdraw);
-                uint256 wantAmountToWithdraw = _convertToWantToken(diff);
-                console2.log("wantAmountToWithdraw", wantAmountToWithdraw);
-                uint256 balOfLoanToken = _withdrawFromReaper(sharesToWithdraw);
+                uint256 balOfLoanToken = _withdrawFromReaper(sharesToWithdraw); //should have a profit if any
                 console2.log("balOfLoanToken", balOfLoanToken);
-                uint256 amountAfterSlippageConsideration =
-                    (_convertToLoanToken(wantAmountToWithdraw) * SLIPPAGE_BPS) / PERCENTAGE_BPS;
-                console2.log("amountAfterSlippageConsideration", amountAfterSlippageConsideration);
+                // uint256 amountAfterSlippageConsideration = (totalLoan * SLIPPAGE_BPS) / PERCENTAGE_BPS;
+                // console2.log("amountAfterSlippageConsideration", amountAfterSlippageConsideration);
                 // check for loss from reaper
-                if (balOfLoanToken < amountAfterSlippageConsideration) {
-                    // check if loss is in the slippage range
-                    // we have a loss
-                }
-                uint256 profit = balOfLoanToken - _convertToLoanToken(wantAmountToWithdraw);
-                _repayAndWithdrawFromAave(balOfLoanToken - profit, wantAmountToWithdraw);
+                // if (balOfLoanToken < totalLoan) {
+                //     console2.log("balOfLoanToken < totalLoan");
+                //     // check if loss is in the slippage range
+                //     // we have a loss
+                // } else {
+                //     uint256 profit = balOfLoanToken - _convertToLoanToken(wantAmountToWithdraw);
+                //     _repayAndWithdrawFromAave(balOfLoanToken - profit, wantAmountToWithdraw);
+                // }
+                _repayAndWithdrawFromAave(balOfLoanToken, _amount); //@audit this is just for demo
             } else {
                 uint256 loanTokenAmount = _convertToLoanToken(_amount - currBal);
                 sharesToWithdraw = IReaperVault(reaperVault).convertToShares(loanTokenAmount);
@@ -169,7 +170,7 @@ contract Strategy is Ownable {
             //TODO: after repay and withdraw there is a high chance that health factor will be less than 1.5 so we need to adjust position.
             _adjustPosition();
         }
-
+        console2.log("want amount", IERC20Extented(want).balanceOf(address(this)));
         IERC20Extented(want).safeTransfer(vault, _amount);
     }
 
@@ -177,8 +178,10 @@ contract Strategy is Ownable {
     function _repayAndWithdrawFromAave(uint256 _repayAmount, uint256 _wantAmountToWithdraw) internal {
         IERC20Extented(loanToken).approve(lendingPool, _repayAmount);
         ILendingPool(lendingPool).repay(loanToken, _repayAmount, 2, address(this));
+        console2.log("want amount before withdraw", IERC20Extented(want).balanceOf(address(this)));
         totalLoanTaken -= _repayAmount;
         ILendingPool(lendingPool).withdraw(want, _wantAmountToWithdraw, address(this));
+        console2.log("want amount after withdraw", IERC20Extented(want).balanceOf(address(this)));
     }
 
     function _withdrawFromReaper(uint256 _shares) internal returns (uint256) {

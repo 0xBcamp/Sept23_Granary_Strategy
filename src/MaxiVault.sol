@@ -173,6 +173,7 @@ contract MaxiVault is ERC20, Ownable, ReentrancyGuard {
     function withdraw(uint256 _shares) public nonReentrant {
         require(_shares > 0, "please provide amount");
         uint256 r = (balance() * _shares) / totalSupply();
+        console2.log("r", r);
         _burn(msg.sender, _shares);
 
         uint256 b = token.balanceOf(address(this));

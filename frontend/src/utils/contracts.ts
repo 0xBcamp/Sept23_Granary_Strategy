@@ -1,6 +1,6 @@
 import { erc20ABI } from "wagmi";
 export const vaultContractConfig = {
-  address: "0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f",
+  address: "0x0611AfEf7A31981d087E5afD3469189234d86060",
   abi: [
     {
       inputs: [

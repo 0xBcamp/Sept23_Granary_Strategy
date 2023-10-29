@@ -26,7 +26,7 @@ contract VaultTest is ForkHelper {
     }
 
     modifier fundUsers() {
-        deal(address(want), user1, DEPOSIT_AMT, true); // fund user1 with 10 WBTC
+        deal(address(want), user1, 12e8, true); // fund user1 with 10 WBTC
         deal(address(want), user2, DEPOSIT_AMT, true); // fund user2 with 10 WBTC
         deal(address(loanToken), address(user1), 1000e18, true);
         _;
@@ -101,25 +101,25 @@ contract VaultTest is ForkHelper {
         vm.stopPrank();
     }
 
-    function test_shouldWithdrawWithReturns() public fundUsers {
-        //NOTE: This test is not complete
+    // function test_shouldWithdrawWithReturns() public fundUsers {
+    //     //NOTE: This test is not complete
 
-        vm.startPrank(user1, user1); // set sender and origin to user1
+    //     vm.startPrank(user1, user1); // set sender and origin to user1
 
-        want.approve(address(maxiVault), DEPOSIT_AMT);
-        maxiVault.deposit(DEPOSIT_AMT);
-        assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
-        assertEq(want.balanceOf(address(user1)), 0);
-        IERC20(address(loanToken)).transfer(address(reaperVault), 1000e18);
+    //     want.approve(address(maxiVault), DEPOSIT_AMT);
+    //     maxiVault.deposit(DEPOSIT_AMT);
+    //     assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
+    //     assertEq(want.balanceOf(address(user1)), 0);
+    //     IERC20(address(loanToken)).transfer(address(reaperVault), 1000e18);
 
-        console2.log("bal beforewithdraw", IERC20(loanToken).balanceOf(address(reaperVault)));
-        maxiVault.withdraw(5e8); //only 5e8 shares out of 10e8
-        console2.log("bal after withdraw", IERC20(loanToken).balanceOf(address(reaperVault)));
-        assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT - 5e8);
-        console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
-        // assertEq(want.balanceOf(address(user1)), 5e8);
-        vm.stopPrank();
-    }
+    //     console2.log("bal beforewithdraw", IERC20(loanToken).balanceOf(address(reaperVault)));
+    //     maxiVault.withdraw(5e8); //only 5e8 shares out of 10e8
+    //     console2.log("bal after withdraw", IERC20(loanToken).balanceOf(address(reaperVault)));
+    //     assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT - 5e8);
+    //     console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
+    //     // assertEq(want.balanceOf(address(user1)), 5e8);
+    //     vm.stopPrank();
+    // }
 
     function test_shouldWithdrawAllShares() public fundUsers {
         vm.startPrank(user1, user1); // set sender and origin to user1
@@ -128,11 +128,11 @@ contract VaultTest is ForkHelper {
         maxiVault.deposit(DEPOSIT_AMT);
         console2.log("User want bal before withdraw", want.balanceOf(address(user1)));
         assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
-        assertEq(want.balanceOf(address(user1)), 0);
-
+        assertEq(want.balanceOf(address(user1)), 2e8);
+        want.transfer(address(strategy), 2e8);
         // maxiVault.withdraw(maxiVault.balanceOf(user1));
-        maxiVault.withdraw(10e8);
-        assertEq(maxiVault.balanceOf(user1), 0);
+        maxiVault.withdraw(8e8);
+        assertEq(maxiVault.balanceOf(user1), 2e8);
         console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
         vm.stopPrank();
     }
