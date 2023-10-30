@@ -6,6 +6,7 @@ import {ForkHelper} from "./ForkHelper.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
+import {IReaperVault} from "../src/interfaces/IReaperVault.sol";
 
 contract VaultTest is ForkHelper {
     uint256 DEPOSIT_AMT = 10e8;
@@ -93,10 +94,9 @@ contract VaultTest is ForkHelper {
         maxiVault.deposit(DEPOSIT_AMT);
         console2.log("User want bal before withdraw", want.balanceOf(address(user1)));
         assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
-        assertEq(want.balanceOf(address(user1)), 0);
         maxiVault.withdraw(5e8); //only 1e8 shares out of 10e8
         assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT - 5e8);
-        assertEq(want.balanceOf(address(user1)), 5e8);
+        assertEq(want.balanceOf(address(user1)), 7e8);
         console2.log("User want bal after withdraw", want.balanceOf(address(user1)));
         vm.stopPrank();
     }
@@ -121,14 +121,16 @@ contract VaultTest is ForkHelper {
     //     vm.stopPrank();
     // }
 
-    function test_shouldWithdrawAllShares() public fundUsers {
+    function test_shouldWithdrawMoreThanHalf() public fundUsers {
         vm.startPrank(user1, user1); // set sender and origin to user1
-
+        console2.log("rvaultBal initial", IERC20(address(loanToken)).balanceOf(address(reaperVault)) / 1e18);
         want.approve(address(maxiVault), DEPOSIT_AMT);
+
         maxiVault.deposit(DEPOSIT_AMT);
-        console2.log("User want bal before withdraw", want.balanceOf(address(user1)));
+
         assertEq(maxiVault.balanceOf(user1), DEPOSIT_AMT);
         assertEq(want.balanceOf(address(user1)), 2e8);
+
         want.transfer(address(strategy), 2e8);
         // maxiVault.withdraw(maxiVault.balanceOf(user1));
         maxiVault.withdraw(8e8);

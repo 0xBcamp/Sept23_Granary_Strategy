@@ -29,8 +29,10 @@ contract DeployVault is Script, Test {
             priceOracle,
             reaperVault
         );
-        deal(want, msg.sender, 10e8, true);
+        vault.initialize(address(strategy));
         vm.stopBroadcast();
+        console2.log("MaxiVault: %s", address(vault));
+        console2.log("Strategy: %s", address(strategy));
         return (address(vault), address(strategy));
     }
 }

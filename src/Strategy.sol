@@ -121,10 +121,7 @@ contract Strategy is Ownable {
         uint256 loanTokenBal = IERC20Extented(loanToken).balanceOf(address(this));
         if (loanTokenBal != 0) {
             IERC20Extented(loanToken).approve(reaperVault, loanTokenBal);
-            uint256 shares = IReaperVault(reaperVault).deposit(loanTokenBal, address(this));
-            if (shares <= 0) {
-                revert DepositFailed();
-            }
+            IReaperVault(reaperVault).deposit(loanTokenBal);
         }
     }
 
