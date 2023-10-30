@@ -27,18 +27,21 @@ if you would like to run the frontend for this project you will need to setup a 
 
 follow the below steps carefully
 
-- Create .env and fill the RPC_URL. You can get one from alchemy make sure to get the optimism mainnet rpc.
+- Create .env and fill the RPC_URL_ALCHEMY. You can get one from alchemy make sure to get the optimism mainnet rpc.
 - Initialize fork in local anvil chain using `make start-fork`
 - If you did the above steps correctly, anvil should display some private key and their corresponding addresses.
 - Now copy that private key and corresponding address, add to the .env(reference .env.example).
 - Go to metamask and add new network.
-- Add RPC as http://http://127.0.0.1:8545, chain id as 31337 and Currency symbol as GO.
+- Add RPC as http://http://127.0.0.1:8545, chain id as 10 and Currency symbol as GO.
 - After adding network, click on the import account and paste anvil private key in there.
 - You should see the address with 1000GO token.
 
-You have successfully completed the setup :)
+You have successfully completed the wallet setup :)
 
-Now last step
+## Now last step
+
+- `make deploy`, this will deploy all the neccessary contracts to the anvil op fork.
+- `make fund`, this will fund your wallet with 3 WBTC to play with, if for some reason this fails check your wallet address in .env or go to makefile and make sure the address we are doing anvil_impersonateAccount have 3 WBTC and some OP ETH.
 
 - `cd frontend`
 - `npm run dev`
